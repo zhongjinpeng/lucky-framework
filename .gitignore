@@ -1,0 +1,67 @@
+HELP.md
+
+### class ###
+*.class
+/*/.*
+/*/*/.*
+/*/*/*/.*
+/*/*/*/*/.*
+/*/class/*
+/*/classes/*
+/*/.gitignore
+/*/*/target/*
+*/target/*
+*/backList
+
+### Mobile Tools for Java (J2ME) ###
+.mtj.tmp/
+
+### Package Files ###
+*.jar
+*.war
+*.ear
+
+### virtual machine crash logs ###
+hs_err_pid*
+/*/.settings/*
+/*/target/*
+/target/
+/*/bin/*
+/*/*/bin/*
+/*/log/*
+
+### STS ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+
+### IntelliJ IDEA ###
+.idea
+.idea/*
+/*/.idea/
+*.iws
+*.iml
+*.ipr
+.DS_Store
+.springBeans
+
+### eclipse project files ###
+**/.classpath
+*.project
+*/.project
+.settings/*
+
+### NetBeans ###
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+/build/
+
+### VS Code ###
+.vscode/
