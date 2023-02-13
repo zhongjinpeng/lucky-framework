@@ -11,6 +11,7 @@
         <module>lucky-util</module>
         <module>lucky-authorized</module>
         <module>lucky-security</module>
+        <module>lucky-resource-server</module>
     </modules>
     <parent>
         <groupId>org.springframework.boot</groupId>
