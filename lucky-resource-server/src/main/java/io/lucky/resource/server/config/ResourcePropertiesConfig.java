@@ -11,11 +11,21 @@ public class ResourcePropertiesConfig {
 
     private List<String> whiteList;
 
+    private String resourceId;
+
     public List<String> getWhiteList() {
         return whiteList;
     }
 
     public void setWhiteList(List<String> whiteList) {
         this.whiteList = whiteList;
+    }
+
+    public String getResourceId() {
+        return resourceId;
+    }
+
+    public void setResourceId(String resourceId) {
+        this.resourceId = resourceId;
     }
 }

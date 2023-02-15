@@ -1,7 +1,6 @@
 package io.lucky.resource.server.config;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.ClassPathResource;
@@ -18,6 +17,9 @@ import org.springframework.util.FileCopyUtils;
 
 import java.io.IOException;
 
+/**
+ * 资源服务器
+ */
 @Configuration
 @EnableResourceServer
 @EnableGlobalMethodSecurity(prePostEnabled = true)
@@ -26,9 +28,6 @@ public class ResourceServerConfiguration extends ResourceServerConfigurerAdapter
     @Autowired
     private ResourcePropertiesConfig resourcePropertiesConfig;
 
-    @Value("${resource-server.resource-id}")
-    private String resourceId;
-
     /**
      * 声明资源服务器的ID，声明了资源服务器的TokenStore类型(默认JWT,支持redis、jdbc等)
      *
@@ -36,7 +35,7 @@ public class ResourceServerConfiguration extends ResourceServerConfigurerAdapter
      * @throws Exception
      */
     public void configure(ResourceServerSecurityConfigurer resources) throws Exception {
-        resources.resourceId(resourceId).tokenStore(new JwtTokenStore(jwtAccessTokenConverter()));
+        resources.resourceId(resourcePropertiesConfig.getResourceId()).tokenStore(new JwtTokenStore(jwtAccessTokenConverter()));
     }
 
     @Bean

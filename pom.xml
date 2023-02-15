@@ -9,9 +9,9 @@
         <module>lucky-starter</module>
         <module>lucky-cloud</module>
         <module>lucky-util</module>
-        <module>lucky-authorized</module>
         <module>lucky-security</module>
         <module>lucky-resource-server</module>
+        <module>lucky-authorization-server</module>
     </modules>
     <parent>
         <groupId>org.springframework.boot</groupId>
@@ -42,6 +42,7 @@
         <spring-cloud-starter-netflix-hystrix.version>2.2.6.RELEASE</spring-cloud-starter-netflix-hystrix.version>
         <spring-cloud-starter-alibaba-sentinel.version>2021.0.1.0</spring-cloud-starter-alibaba-sentinel.version>
         <spring-cloud-starter-oauth2.version>2.2.5.RELEASE</spring-cloud-starter-oauth2.version>
+        <spring-security-oauth2.version>2.2.5.RELEASE</spring-security-oauth2.version>
 
         <javadoc.opts>-Xdoclint:none</javadoc.opts>
         <commons.io.version>2.11.0</commons.io.version>
