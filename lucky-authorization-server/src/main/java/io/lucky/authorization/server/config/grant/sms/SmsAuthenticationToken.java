@@ -18,21 +18,20 @@ public class SmsAuthenticationToken extends AbstractAuthenticationToken {
         this.setAuthenticated(false);
     }
 
-    public SmsAuthenticationToken(Object principal, Object credentials, Collection<? extends GrantedAuthority> authorities) {
+    public SmsAuthenticationToken(Object principal ,Collection<? extends GrantedAuthority> authorities) {
         super(authorities);
         this.principal = principal;
-        this.credentials = credentials;
         super.setAuthenticated(true);
     }
 
     @Override
     public Object getCredentials() {
-        return null;
+        return this.credentials;
     }
 
     @Override
     public Object getPrincipal() {
-        return null;
+        return this.principal;
     }
 
     public void setAuthenticated(boolean isAuthenticated) throws IllegalArgumentException {

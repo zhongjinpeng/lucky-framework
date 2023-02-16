@@ -1,5 +1,7 @@
 package io.lucky.authorization.server.config;
 
+import io.lucky.authorization.server.config.grant.sms.SmsTokenGrant;
+import io.lucky.authorization.server.constants.AuthorizationServeConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,24 +11,32 @@ import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.crypto.password.NoOpPasswordEncoder;
+import org.springframework.security.oauth2.common.OAuth2AccessToken;
 import org.springframework.security.oauth2.config.annotation.builders.ClientDetailsServiceBuilder;
 import org.springframework.security.oauth2.config.annotation.configurers.ClientDetailsServiceConfigurer;
 import org.springframework.security.oauth2.config.annotation.web.configuration.AuthorizationServerConfigurerAdapter;
 import org.springframework.security.oauth2.config.annotation.web.configuration.EnableAuthorizationServer;
 import org.springframework.security.oauth2.config.annotation.web.configurers.AuthorizationServerEndpointsConfigurer;
 import org.springframework.security.oauth2.config.annotation.web.configurers.AuthorizationServerSecurityConfigurer;
+import org.springframework.security.oauth2.provider.*;
 import org.springframework.security.oauth2.provider.approval.InMemoryApprovalStore;
+import org.springframework.security.oauth2.provider.client.ClientCredentialsTokenGranter;
 import org.springframework.security.oauth2.provider.code.AuthorizationCodeServices;
+import org.springframework.security.oauth2.provider.code.AuthorizationCodeTokenGranter;
 import org.springframework.security.oauth2.provider.code.InMemoryAuthorizationCodeServices;
-import org.springframework.security.oauth2.provider.token.TokenEnhancer;
-import org.springframework.security.oauth2.provider.token.TokenEnhancerChain;
-import org.springframework.security.oauth2.provider.token.TokenStore;
+import org.springframework.security.oauth2.provider.implicit.ImplicitTokenGranter;
+import org.springframework.security.oauth2.provider.password.ResourceOwnerPasswordTokenGranter;
+import org.springframework.security.oauth2.provider.refresh.RefreshTokenGranter;
+import org.springframework.security.oauth2.provider.request.DefaultOAuth2RequestFactory;
+import org.springframework.security.oauth2.provider.token.*;
 import org.springframework.security.oauth2.provider.token.store.JwtAccessTokenConverter;
 import org.springframework.security.oauth2.provider.token.store.JwtTokenStore;
 import org.springframework.util.FileCopyUtils;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * 授权服务器配置
@@ -42,6 +52,9 @@ public class AuthorizationServerConfiguration extends AuthorizationServerConfigu
 
     @Autowired
     private AuthenticationManager authenticationManager;
+
+    @Autowired
+    private ClientDetailsService clientDetailsService;
 
     /**
      * 配置令牌端点(Token Endpoint)的安全约束
@@ -110,9 +123,31 @@ public class AuthorizationServerConfiguration extends AuthorizationServerConfigu
                 Arrays.asList(tokenEnhancer(), jwtTokenEnhancer()));
         endpoints.approvalStore(approvalStore())
                 .authorizationCodeServices(authorizationCodeServices())
+                .tokenServices(authorizationServerTokenServices())
                 .tokenStore(tokenStore())
+                .tokenGranter(tokenGranter(endpoints))
                 .tokenEnhancer(tokenEnhancerChain)
                 .authenticationManager(authenticationManager);
+    }
+
+
+    private TokenGranter tokenGranter(AuthorizationServerEndpointsConfigurer endpoints) {
+        List<TokenGranter> tokenGranterList = new ArrayList<>(Arrays.asList(endpoints.getTokenGranter()));
+        // 添加自定义TokenGranter
+        tokenGranterList.add(new SmsTokenGrant(authorizationServerTokenServices(),clientDetailsService,endpoints.getOAuth2RequestFactory(),"sms",authenticationManager));
+        return new CompositeTokenGranter(tokenGranterList);
+    }
+
+    @Bean
+    public AuthorizationServerTokenServices authorizationServerTokenServices() {
+        DefaultTokenServices tokenServices = new DefaultTokenServices();
+        tokenServices.setAccessTokenValiditySeconds(AuthorizationServeConstants.DEFAULT_ACCESS_TOKEN_VALIDITY_SECONDS);
+        tokenServices.setRefreshTokenValiditySeconds(AuthorizationServeConstants.DEFAULT_REFRESH_TOKEN_VALIDITY_SECONDS);
+        tokenServices.setClientDetailsService(clientDetailsService);
+        tokenServices.setAuthenticationManager(authenticationManager);
+        tokenServices.setSupportRefreshToken(false);
+        tokenServices.setTokenStore(tokenStore());
+        return tokenServices;
     }
 
     @Bean
