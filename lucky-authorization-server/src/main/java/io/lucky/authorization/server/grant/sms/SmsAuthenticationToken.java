@@ -1,4 +1,4 @@
-package io.lucky.authorization.server.config.grant.sms;
+package io.lucky.authorization.server.grant.sms;
 
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;

@@ -1,6 +1,6 @@
 package io.lucky.authorization.server.config;
 
-import io.lucky.authorization.server.config.grant.sms.SmsAuthenticationProvider;
+import io.lucky.authorization.server.grant.sms.SmsAuthenticationProvider;
 import io.lucky.authorization.server.service.AuthorizationUserService;
 import io.lucky.authorization.server.service.AuthorizationVerificationCodeService;
 import org.springframework.beans.factory.annotation.Autowired;

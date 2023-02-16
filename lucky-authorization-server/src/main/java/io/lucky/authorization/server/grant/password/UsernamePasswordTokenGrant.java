@@ -1,25 +1,27 @@
-package io.lucky.authorization.server.config.grant.sms;
+package io.lucky.authorization.server.grant.password;
 
-import org.springframework.security.authentication.*;
+import org.springframework.security.authentication.AbstractAuthenticationToken;
+import org.springframework.security.authentication.AccountStatusException;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.common.exceptions.InvalidGrantException;
 import org.springframework.security.oauth2.common.exceptions.InvalidRequestException;
 import org.springframework.security.oauth2.provider.*;
-import org.springframework.security.oauth2.provider.request.DefaultOAuth2RequestFactory;
 import org.springframework.security.oauth2.provider.token.AbstractTokenGranter;
 import org.springframework.security.oauth2.provider.token.AuthorizationServerTokenServices;
 
 import java.util.Map;
 
 /**
- * 手机验证码授权模式
+ * 用户名密码验证码授权模式
  */
-public class SmsTokenGrant extends AbstractTokenGranter {
-    private static final String GRANT_TYPE = "sms";
+public class UsernamePasswordTokenGrant extends AbstractTokenGranter {
+    private static final String GRANT_TYPE = "username-password";
 
     private final AuthenticationManager authenticationManager;
 
-    public SmsTokenGrant(AuthorizationServerTokenServices tokenServices, ClientDetailsService clientDetailsService, OAuth2RequestFactory requestFactory, String grantType, AuthenticationManager authenticationManager) {
+    public UsernamePasswordTokenGrant(AuthorizationServerTokenServices tokenServices, ClientDetailsService clientDetailsService, OAuth2RequestFactory requestFactory, String grantType, AuthenticationManager authenticationManager) {
         super(tokenServices, clientDetailsService, requestFactory, GRANT_TYPE);
         this.authenticationManager = authenticationManager;
     }
@@ -34,7 +36,7 @@ public class SmsTokenGrant extends AbstractTokenGranter {
             throw new InvalidRequestException("Phone and verificationCode must be supplied.");
         }
 
-        Authentication userAuth = new SmsAuthenticationToken(phone, verificationCode);
+        Authentication userAuth = new UsernamePasswordAuthenticationToken(phone, verificationCode);
         ((AbstractAuthenticationToken) userAuth).setDetails(parameters);
         try {
             userAuth = authenticationManager.authenticate(userAuth);
