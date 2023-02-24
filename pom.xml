@@ -12,6 +12,8 @@
         <module>lucky-security</module>
         <module>lucky-resource-server</module>
         <module>lucky-authorization-server</module>
+        <module>lucky-redis</module>
+        <module>lucky-rocketmq</module>
     </modules>
     <parent>
         <groupId>org.springframework.boot</groupId>

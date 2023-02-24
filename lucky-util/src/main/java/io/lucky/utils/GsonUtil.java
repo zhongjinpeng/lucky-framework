@@ -1,4 +1,4 @@
-package io.lucky.framework.util;
+package io.lucky.utils;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;

@@ -1,4 +1,4 @@
-package io.lucky.framework.util;
+package io.lucky.utils;
 
 import org.apache.commons.codec.binary.Base64;
 
