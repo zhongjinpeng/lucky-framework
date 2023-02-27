@@ -11,7 +11,7 @@ import java.util.concurrent.*;
  **/
 public class ThreadPoolUtil {
 
-    private static ThreadPoolExecutor threadPoolExecutor;
+    private static volatile ThreadPoolExecutor threadPoolExecutor;
 
     private static final int BLOCK_QUEUE_SIZE = 1000;
 
@@ -42,15 +42,15 @@ public class ThreadPoolUtil {
     }
 
     public static void executor(Runnable runnable) {
-        intThreadPoolExecutor().execute(runnable);
+        getInstance().execute(runnable);
     }
 
     public static <T> Future<T> submit(Callable<T> callable) {
-        return intThreadPoolExecutor().submit(callable);
+        return getInstance().submit(callable);
     }
 
     public static void shutdown(){
-        intThreadPoolExecutor().shutdown();
+        getInstance().shutdown();
     }
 
     /**
@@ -58,20 +58,19 @@ public class ThreadPoolUtil {
      *
      * @return
      */
-    private static ThreadPoolExecutor intThreadPoolExecutor() {
-        if(threadPoolExecutor != null)
-            return threadPoolExecutor;
-        synchronized (ThreadPoolUtil.class) {
-            if (threadPoolExecutor == null) {
-                threadPoolExecutor = new ThreadPoolExecutor(CORE_POOL_SIZE,
-                        MAX_POOL_SIZE,
-                        KEEP_ALIVE_TIME,
-                        timeUnit,
-                        workQueue,
-                        handler);
+    private static ThreadPoolExecutor getInstance() {
+        if(threadPoolExecutor == null){
+            synchronized (ThreadPoolUtil.class) {
+                if (threadPoolExecutor == null) {
+                    threadPoolExecutor = new ThreadPoolExecutor(CORE_POOL_SIZE,
+                            MAX_POOL_SIZE,
+                            KEEP_ALIVE_TIME,
+                            timeUnit,
+                            workQueue,
+                            handler);
+                }
             }
-            return threadPoolExecutor;
         }
-
+        return threadPoolExecutor;
     }
 }
