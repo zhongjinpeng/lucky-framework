@@ -10,11 +10,6 @@ public class LockParam implements Serializable {
     private String key;
 
     /**
-     * 锁值
-     */
-    private String value;
-
-    /**
      * 锁失效时间,单位:秒,默认:60秒
      */
     private Integer expirationTime = 60;
@@ -45,14 +40,6 @@ public class LockParam implements Serializable {
 
     public void setKey(String key) {
         this.key = key;
-    }
-
-    public String getValue() {
-        return value;
-    }
-
-    public void setValue(String value) {
-        this.value = value;
     }
 
     public Integer getExpirationTime() {
@@ -99,7 +86,6 @@ public class LockParam implements Serializable {
     public String toString() {
         return "LockParam{" +
                 "key='" + key + '\'' +
-                ", value='" + value + '\'' +
                 ", expirationTime=" + expirationTime +
                 ", isReentrant=" + isReentrant +
                 ", isSpin=" + isSpin +
@@ -115,8 +101,6 @@ public class LockParam implements Serializable {
     public static class Builder {
 
         private String key;
-
-        private String value;
 
         private Integer expirationTime = 5;
 
@@ -160,7 +144,6 @@ public class LockParam implements Serializable {
         public LockParam build() {
             LockParam lockParam = new LockParam();
             lockParam.setKey(key);
-            lockParam.setValue(value);
             lockParam.setExpirationTime(expirationTime);
             lockParam.setReentrant(isReentrant);
             lockParam.setSpin(isSpin);

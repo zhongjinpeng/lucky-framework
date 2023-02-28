@@ -28,6 +28,11 @@
             <artifactId>redisson</artifactId>
             <version>3.19.0</version>
         </dependency>
+        <dependency>
+            <groupId>io.lucky</groupId>
+            <artifactId>lucky-util</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+        </dependency>
     </dependencies>
 
 </project>
