@@ -1,14 +1,20 @@
 package io.lucky.authorization.server.config;
 
+import com.zaxxer.hikari.HikariDataSource;
 import io.lucky.authorization.server.grant.sms.SmsTokenGrant;
 import io.lucky.authorization.server.constants.AuthorizationServeConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
+import org.springframework.data.redis.connection.RedisConnection;
+import org.springframework.data.redis.connection.RedisConnectionFactory;
+import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.crypto.password.NoOpPasswordEncoder;
 import org.springframework.security.oauth2.config.annotation.builders.ClientDetailsServiceBuilder;
@@ -22,13 +28,18 @@ import org.springframework.security.oauth2.provider.approval.InMemoryApprovalSto
 import org.springframework.security.oauth2.provider.code.AuthorizationCodeServices;
 import org.springframework.security.oauth2.provider.code.InMemoryAuthorizationCodeServices;
 import org.springframework.security.oauth2.provider.token.*;
+import org.springframework.security.oauth2.provider.token.store.JdbcTokenStore;
 import org.springframework.security.oauth2.provider.token.store.JwtAccessTokenConverter;
 import org.springframework.security.oauth2.provider.token.store.JwtTokenStore;
+import org.springframework.security.oauth2.provider.token.store.redis.RedisTokenStore;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.FileCopyUtils;
 
+import javax.sql.DataSource;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -84,15 +95,22 @@ public class AuthorizationServerConfiguration extends AuthorizationServerConfigu
         ClientDetailsServiceBuilder.ClientBuilder clientBuilder = null;
         for (AuthorizationServeClientsPropertiesConfig.AuthorizationServeClientConfig authorizationServeClientConfig : authorizationServeClientsPropertiesConfig.getClients()) {
             logger.debug(authorizationServeClientConfig.toString());
+
+            ArrayList<String> authorizedGrantTypes = new ArrayList<String>();
+            Collections.addAll(authorizedGrantTypes,authorizationServeClientConfig.getAuthorizedGrantTypes());
+            if(authorizationServeClientsPropertiesConfig.getRefreshToken()){
+                authorizedGrantTypes.add("refresh_token");
+            }
+
             clientBuilder = builder.
                     withClient(authorizationServeClientConfig.getClientId()).
                     resourceIds(authorizationServeClientConfig.getResourceIds()).
                     secret(authorizationServeClientConfig.getClientSecret()).
                     scopes(authorizationServeClientConfig.getScope()).
-                    authorizedGrantTypes(authorizationServeClientConfig.getAuthorizedGrantTypes()).
+                    authorizedGrantTypes(authorizedGrantTypes.toArray(new String[authorizedGrantTypes.size()])).
                     redirectUris(authorizationServeClientConfig.getRegisteredRedirectUris()).
-                    accessTokenValiditySeconds(authorizationServeClientConfig.getAccessTokenValiditySeconds()).
-                    refreshTokenValiditySeconds(authorizationServeClientConfig.getRefreshTokenValiditySeconds()).
+                    accessTokenValiditySeconds(authorizationServeClientsPropertiesConfig.getAccessTokenValiditySeconds()).
+                    refreshTokenValiditySeconds(authorizationServeClientsPropertiesConfig.getRefreshTokenValiditySeconds()).
                     autoApprove(authorizationServeClientConfig.getAutoApprove()).
                     additionalInformation(authorizationServeClientConfig.getAdditionalInformation());
         }
@@ -107,19 +125,24 @@ public class AuthorizationServerConfiguration extends AuthorizationServerConfigu
      */
     @Override
     public void configure(AuthorizationServerEndpointsConfigurer endpoints) throws Exception {
-        // 1.配置我们的令牌存放方式为JWT方式，而不是内存、数据库或Redis方式
-        // 2.配置JWT Token的非对称加密来进行签名
-        // 3.配置一个自定义的Token增强器，把更多信息放入Token中
-        // 4.配置使用JDBC数据库方式来保存用户的授权批准记录
-        TokenEnhancerChain tokenEnhancerChain = new TokenEnhancerChain();
-        tokenEnhancerChain.setTokenEnhancers(
-                Arrays.asList(tokenEnhancer(), jwtTokenEnhancer()));
+       switch (authorizationServeClientsPropertiesConfig.getTokenType()){
+           case "jwt" :
+               TokenEnhancerChain tokenEnhancerChain = new TokenEnhancerChain();
+               tokenEnhancerChain.setTokenEnhancers(Arrays.asList(tokenEnhancer(), jwtAccessTokenConverter()));
+               endpoints.tokenStore(jwtTokenStore()).accessTokenConverter(jwtAccessTokenConverter()).tokenEnhancer(tokenEnhancerChain);
+               break;
+           case "redis" :
+               endpoints.tokenStore(redisTokenStore());
+               break;
+           case "jdbc" :
+               endpoints.tokenStore(jdbcTokenStore());
+               break;
+           default:
+               // TODO  抛出UnKnowTokenTypeException
+       }
         endpoints.approvalStore(approvalStore())
                 .authorizationCodeServices(authorizationCodeServices())
-                .tokenServices(authorizationServerTokenServices())
-                .tokenStore(tokenStore())
                 .tokenGranter(tokenGranter(endpoints))
-                .tokenEnhancer(tokenEnhancerChain)
                 .authenticationManager(authenticationManager);
     }
 
@@ -135,44 +158,46 @@ public class AuthorizationServerConfiguration extends AuthorizationServerConfigu
         return new CompositeTokenGranter(tokenGranterList);
     }
 
-    @Bean
+    @Bean("authorizationServerTokenServices")
     public AuthorizationServerTokenServices authorizationServerTokenServices() {
         DefaultTokenServices tokenServices = new DefaultTokenServices();
-        tokenServices.setAccessTokenValiditySeconds(AuthorizationServeConstants.DEFAULT_ACCESS_TOKEN_VALIDITY_SECONDS);
-        tokenServices.setRefreshTokenValiditySeconds(AuthorizationServeConstants.DEFAULT_REFRESH_TOKEN_VALIDITY_SECONDS);
+//        tokenServices.setAccessTokenValiditySeconds(authorizationServeClientsPropertiesConfig.getAccessTokenValiditySeconds());
+//        tokenServices.setRefreshTokenValiditySeconds(authorizationServeClientsPropertiesConfig.getRefreshTokenValiditySeconds());
         tokenServices.setClientDetailsService(clientDetailsService);
         tokenServices.setAuthenticationManager(authenticationManager);
-        tokenServices.setSupportRefreshToken(false);
-        tokenServices.setTokenStore(tokenStore());
+        tokenServices.setSupportRefreshToken(authorizationServeClientsPropertiesConfig.getRefreshToken());
+        switch (authorizationServeClientsPropertiesConfig.getTokenType()){
+            case "jwt" :
+                tokenServices.setTokenStore(jwtTokenStore());
+                TokenEnhancerChain tokenEnhancerChain = new TokenEnhancerChain();
+                tokenEnhancerChain.setTokenEnhancers(Arrays.asList(tokenEnhancer(), jwtAccessTokenConverter()));
+                tokenServices.setTokenEnhancer(tokenEnhancerChain);
+                break;
+            case "redis" :
+                tokenServices.setTokenStore(redisTokenStore());
+                break;
+            case "jdbc" :
+                tokenServices.setTokenStore(jdbcTokenStore());
+                break;
+            default:
+                // TODO  抛出UnKnowTokenTypeException
+        }
         return tokenServices;
-    }
-
-    @Bean
-    public AuthorizationCodeServices authorizationCodeServices() {
-        return new InMemoryAuthorizationCodeServices();
     }
 
     /**
      * 配置Token持久化方式
      * @return
      */
-    @Bean
-    public TokenStore tokenStore() {
-        return new JwtTokenStore(jwtTokenEnhancer());
+    @Bean("authorizationServerJwtTokenStore")
+    @ConditionalOnProperty(prefix = "authorization-server", name = "token-type",havingValue = "jwt")
+    public TokenStore jwtTokenStore() {
+        return new JwtTokenStore(jwtAccessTokenConverter());
     }
 
-    @Bean
-    public InMemoryApprovalStore approvalStore() {
-        return new InMemoryApprovalStore();
-    }
-
-    @Bean
-    public TokenEnhancer tokenEnhancer() {
-        return new CustomTokenEnhancer();
-    }
-
-    @Bean
-    protected JwtAccessTokenConverter jwtTokenEnhancer() {
+    @Bean("authorizationServerJwtAccessTokenConverter")
+    @ConditionalOnProperty(prefix = "authorization-server", name = "token-type",havingValue = "jwt")
+    protected JwtAccessTokenConverter jwtAccessTokenConverter() {
         JwtAccessTokenConverter converter = new JwtAccessTokenConverter();
         Resource resource = new ClassPathResource("public.cert");
         String publicKey = null;
@@ -184,5 +209,46 @@ public class AuthorizationServerConfiguration extends AuthorizationServerConfigu
         converter.setVerifierKey(publicKey);
         return converter;
     }
+
+    @Bean("authorizationServerRedisTokenStore")
+    @ConditionalOnProperty(prefix = "authorization-server", name = "token-type",havingValue = "redis")
+    protected TokenStore redisTokenStore() {
+        return new RedisTokenStore(new LettuceConnectionFactory());
+    }
+
+    @Bean("authorizationServerJdbcTokenStore")
+    @ConditionalOnProperty(prefix = "authorization-server", name = "token-type",havingValue = "jdbc")
+    protected TokenStore jdbcTokenStore() {
+        return new JdbcTokenStore(new HikariDataSource());
+    }
+
+    /**
+     * 授权码模式数据来源
+     * @return
+     */
+    @Bean("authorizationServerAuthorizationCodeServices")
+    public AuthorizationCodeServices authorizationCodeServices() {
+        return new InMemoryAuthorizationCodeServices();
+    }
+
+    /**
+     * 授权信息保存策略
+     * @return
+     */
+    @Bean("authorizationServerInMemoryApprovalStore")
+    public InMemoryApprovalStore approvalStore() {
+        return new InMemoryApprovalStore();
+    }
+
+    /**
+     * 自定义Token增强器,可以将更多信息放入Token
+     * @return
+     */
+    @Bean("authorizationServerTokenEnhancer")
+    public TokenEnhancer tokenEnhancer() {
+        return new CustomTokenEnhancer();
+    }
+
+
 
 }

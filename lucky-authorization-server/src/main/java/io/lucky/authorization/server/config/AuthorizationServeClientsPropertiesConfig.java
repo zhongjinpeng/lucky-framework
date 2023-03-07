@@ -1,5 +1,6 @@
 package io.lucky.authorization.server.config;
 
+import io.lucky.authorization.server.constants.AuthorizationServeConstants;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
@@ -12,7 +13,59 @@ import java.util.Map;
 @ConfigurationProperties(prefix = "authorization-server")
 public class AuthorizationServeClientsPropertiesConfig {
 
+    /**
+     * token类型
+     */
+    private String tokenType;
+
+    /**
+     * access token 有效时间
+     */
+    private Integer accessTokenValiditySeconds = AuthorizationServeConstants.DEFAULT_ACCESS_TOKEN_VALIDITY_SECONDS;
+
+    /**
+     * refresh token 有效时间
+     */
+    private Integer refreshTokenValiditySeconds = AuthorizationServeConstants.DEFAULT_REFRESH_TOKEN_VALIDITY_SECONDS;
+
+    /**
+     * 是否支持refresh-token
+     */
+    private Boolean refreshToken;
+
     private List<AuthorizationServeClientConfig> clients;
+
+    public String getTokenType() {
+        return tokenType;
+    }
+
+    public void setTokenType(String tokenType) {
+        this.tokenType = tokenType;
+    }
+
+    public Integer getAccessTokenValiditySeconds() {
+        return accessTokenValiditySeconds;
+    }
+
+    public void setAccessTokenValiditySeconds(Integer accessTokenValiditySeconds) {
+        this.accessTokenValiditySeconds = accessTokenValiditySeconds;
+    }
+
+    public Integer getRefreshTokenValiditySeconds() {
+        return refreshTokenValiditySeconds;
+    }
+
+    public void setRefreshTokenValiditySeconds(Integer refreshTokenValiditySeconds) {
+        this.refreshTokenValiditySeconds = refreshTokenValiditySeconds;
+    }
+
+    public Boolean getRefreshToken() {
+        return refreshToken;
+    }
+
+    public void setRefreshToken(Boolean refreshToken) {
+        this.refreshToken = refreshToken;
+    }
 
     public List<AuthorizationServeClientConfig> getClients() {
         return clients;
@@ -25,7 +78,11 @@ public class AuthorizationServeClientsPropertiesConfig {
     @Override
     public String toString() {
         return "AuthorizationServeClientsPropertiesConfig{" +
-                "clients=" + clients +
+                "tokenType='" + tokenType + '\'' +
+                ", accessTokenValiditySeconds=" + accessTokenValiditySeconds +
+                ", refreshTokenValiditySeconds=" + refreshTokenValiditySeconds +
+                ", refreshToken=" + refreshToken +
+                ", clients=" + clients +
                 '}';
     }
 
@@ -70,16 +127,6 @@ public class AuthorizationServeClientsPropertiesConfig {
          * 预定义的重定向url
          */
         private String[] registeredRedirectUris;
-
-        /**
-         * access token 有效时间
-         */
-        private Integer accessTokenValiditySeconds;
-
-        /**
-         * refresh token 有效时间
-         */
-        private Integer refreshTokenValiditySeconds;
 
         /**
          * 客户端是否需要特定范围的用户批准
@@ -157,23 +204,6 @@ public class AuthorizationServeClientsPropertiesConfig {
         public void setRegisteredRedirectUris(String[] registeredRedirectUris) {
             this.registeredRedirectUris = registeredRedirectUris;
         }
-
-        public Integer getAccessTokenValiditySeconds() {
-            return accessTokenValiditySeconds;
-        }
-
-        public void setAccessTokenValiditySeconds(Integer accessTokenValiditySeconds) {
-            this.accessTokenValiditySeconds = accessTokenValiditySeconds;
-        }
-
-        public Integer getRefreshTokenValiditySeconds() {
-            return refreshTokenValiditySeconds;
-        }
-
-        public void setRefreshTokenValiditySeconds(Integer refreshTokenValiditySeconds) {
-            this.refreshTokenValiditySeconds = refreshTokenValiditySeconds;
-        }
-
         public Boolean getAutoApprove() {
             return isAutoApprove;
         }
@@ -201,8 +231,6 @@ public class AuthorizationServeClientsPropertiesConfig {
                     ", scope='" + scope + '\'' +
                     ", authorizedGrantTypes=" + Arrays.toString(authorizedGrantTypes) +
                     ", registeredRedirectUris=" + Arrays.toString(registeredRedirectUris) +
-                    ", accessTokenValiditySeconds=" + accessTokenValiditySeconds +
-                    ", refreshTokenValiditySeconds=" + refreshTokenValiditySeconds +
                     ", isAutoApprove=" + isAutoApprove +
                     ", additionalInformation=" + additionalInformation +
                     '}';

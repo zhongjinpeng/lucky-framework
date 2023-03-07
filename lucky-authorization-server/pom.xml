@@ -33,6 +33,16 @@
             <artifactId>lucky-security</artifactId>
             <version>0.0.1-SNAPSHOT</version>
         </dependency>
+        <dependency>
+            <groupId>io.lucky</groupId>
+            <artifactId>lucky-redis</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>io.lucky</groupId>
+            <artifactId>lucky-database</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+        </dependency>
     </dependencies>
 
 </project>

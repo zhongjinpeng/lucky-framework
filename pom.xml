@@ -14,6 +14,7 @@
         <module>lucky-authorization-server</module>
         <module>lucky-redis</module>
         <module>lucky-rocketmq</module>
+        <module>lucky-dubbo</module>
     </modules>
     <parent>
         <groupId>org.springframework.boot</groupId>
