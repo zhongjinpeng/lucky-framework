@@ -1,6 +1,6 @@
 package io.lucky.authorization.server.config;
 
-import io.lucky.authorization.server.grant.sms.SmsAuthenticationProvider;
+import io.lucky.authorization.server.grant.verification.code.VerificationCodeAuthenticationProvider;
 import io.lucky.authorization.server.service.AuthorizationUserService;
 import io.lucky.authorization.server.service.AuthorizationVerificationCodeService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,6 +11,7 @@ import org.springframework.security.config.annotation.authentication.builders.Au
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 /**
  * 安全配置
@@ -24,6 +25,9 @@ public class WebSecurityConfiguration extends WebSecurityConfigurerAdapter {
     @Autowired
     private AuthorizationUserService authorizationUserService;
 
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
     @Override
     @Bean
     public AuthenticationManager authenticationManagerBean() throws Exception {
@@ -32,18 +36,20 @@ public class WebSecurityConfiguration extends WebSecurityConfigurerAdapter {
 
     @Override
     protected void configure(AuthenticationManagerBuilder auth) throws Exception {
-        auth.inMemoryAuthentication()
-                .passwordEncoder(new BCryptPasswordEncoder()).and()
-        .authenticationProvider(new SmsAuthenticationProvider(authorizationVerificationCodeService,authorizationUserService));
+        auth
+                .userDetailsService(authorizationUserService)
+                .passwordEncoder(passwordEncoder)
+                .and()
+                .authenticationProvider(new VerificationCodeAuthenticationProvider(authorizationVerificationCodeService, authorizationUserService));
+//                .authenticationProvider(new UsernamePasswordAuthenticationProvider(authorizationUserService,passwordEncoder));
     }
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         http.authorizeRequests()
-                .antMatchers("/login", "/oauth/authorize")
-                .permitAll()
-                .anyRequest().authenticated()
-                .and()
-                .formLogin().loginPage("/login");
+                .antMatchers("/login/**", "/oauth/authorize").permitAll() // 公开访问
+                .anyRequest().authenticated() // 需要认证
+                .and().formLogin().loginPage("/login") // 未认证跳转到登录页面
+                .and().csrf().disable(); // 关闭csrf
     }
 }

@@ -15,6 +15,7 @@
         <module>lucky-redis</module>
         <module>lucky-rocketmq</module>
         <module>lucky-dubbo</module>
+        <module>lucky-common</module>
     </modules>
     <parent>
         <groupId>org.springframework.boot</groupId>
@@ -45,7 +46,7 @@
         <spring-cloud-starter-netflix-hystrix.version>2.2.6.RELEASE</spring-cloud-starter-netflix-hystrix.version>
         <spring-cloud-starter-alibaba-sentinel.version>2021.0.1.0</spring-cloud-starter-alibaba-sentinel.version>
         <spring-cloud-starter-oauth2.version>2.2.5.RELEASE</spring-cloud-starter-oauth2.version>
-        <spring-security-oauth2.version>2.2.5.RELEASE</spring-security-oauth2.version>
+        <spring-security-oauth2.version>2.3.5.RELEASE</spring-security-oauth2.version>
 
         <javadoc.opts>-Xdoclint:none</javadoc.opts>
         <commons.io.version>2.11.0</commons.io.version>

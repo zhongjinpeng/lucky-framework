@@ -1,21 +1,17 @@
 package io.lucky.authorization.server.config;
 
-import com.zaxxer.hikari.HikariDataSource;
-import io.lucky.authorization.server.grant.sms.SmsTokenGrant;
-import io.lucky.authorization.server.constants.AuthorizationServeConstants;
+import io.lucky.authorization.server.grant.verification.code.VerificationCodeTokenGrant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
-import org.springframework.data.redis.connection.RedisConnection;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
-import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.NoOpPasswordEncoder;
 import org.springframework.security.oauth2.config.annotation.builders.ClientDetailsServiceBuilder;
 import org.springframework.security.oauth2.config.annotation.configurers.ClientDetailsServiceConfigurer;
@@ -28,19 +24,13 @@ import org.springframework.security.oauth2.provider.approval.InMemoryApprovalSto
 import org.springframework.security.oauth2.provider.code.AuthorizationCodeServices;
 import org.springframework.security.oauth2.provider.code.InMemoryAuthorizationCodeServices;
 import org.springframework.security.oauth2.provider.token.*;
-import org.springframework.security.oauth2.provider.token.store.JdbcTokenStore;
 import org.springframework.security.oauth2.provider.token.store.JwtAccessTokenConverter;
 import org.springframework.security.oauth2.provider.token.store.JwtTokenStore;
 import org.springframework.security.oauth2.provider.token.store.redis.RedisTokenStore;
-import org.springframework.util.CollectionUtils;
 import org.springframework.util.FileCopyUtils;
 
-import javax.sql.DataSource;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * 授权服务器配置
@@ -59,6 +49,12 @@ public class AuthorizationServerConfiguration extends AuthorizationServerConfigu
 
     @Autowired
     private ClientDetailsService clientDetailsService;
+
+    @Autowired
+    private RedisConnectionFactory redisConnectionFactory;
+
+    @Autowired(required = false)
+    private UserDetailsService userDetailsService;
 
     /**
      * 配置令牌端点(Token Endpoint)的安全约束
@@ -134,9 +130,9 @@ public class AuthorizationServerConfiguration extends AuthorizationServerConfigu
            case "redis" :
                endpoints.tokenStore(redisTokenStore());
                break;
-           case "jdbc" :
-               endpoints.tokenStore(jdbcTokenStore());
-               break;
+//           case "jdbc" :
+//               endpoints.tokenStore(jdbcTokenStore());
+//               break;
            default:
                // TODO  抛出UnKnowTokenTypeException
        }
@@ -144,6 +140,9 @@ public class AuthorizationServerConfiguration extends AuthorizationServerConfigu
                 .authorizationCodeServices(authorizationCodeServices())
                 .tokenGranter(tokenGranter(endpoints))
                 .authenticationManager(authenticationManager);
+       if(Objects.nonNull(userDetailsService)){
+           endpoints.userDetailsService(userDetailsService);
+       }
     }
 
     /**
@@ -154,7 +153,8 @@ public class AuthorizationServerConfiguration extends AuthorizationServerConfigu
     private TokenGranter tokenGranter(AuthorizationServerEndpointsConfigurer endpoints) {
         List<TokenGranter> tokenGranterList = new ArrayList<>(Arrays.asList(endpoints.getTokenGranter()));
         // 添加自定义TokenGranter
-        tokenGranterList.add(new SmsTokenGrant(authorizationServerTokenServices(),clientDetailsService,endpoints.getOAuth2RequestFactory(),"sms",authenticationManager));
+        tokenGranterList.add(new VerificationCodeTokenGrant(authorizationServerTokenServices(),clientDetailsService,endpoints.getOAuth2RequestFactory(),authenticationManager));
+//        tokenGranterList.add(new UsernamePasswordTokenGrant(authorizationServerTokenServices(),clientDetailsService,endpoints.getOAuth2RequestFactory(),authenticationManager));
         return new CompositeTokenGranter(tokenGranterList);
     }
 
@@ -176,9 +176,9 @@ public class AuthorizationServerConfiguration extends AuthorizationServerConfigu
             case "redis" :
                 tokenServices.setTokenStore(redisTokenStore());
                 break;
-            case "jdbc" :
-                tokenServices.setTokenStore(jdbcTokenStore());
-                break;
+//            case "jdbc" :
+//                tokenServices.setTokenStore(jdbcTokenStore());
+//                break;
             default:
                 // TODO  抛出UnKnowTokenTypeException
         }
@@ -213,14 +213,14 @@ public class AuthorizationServerConfiguration extends AuthorizationServerConfigu
     @Bean("authorizationServerRedisTokenStore")
     @ConditionalOnProperty(prefix = "authorization-server", name = "token-type",havingValue = "redis")
     protected TokenStore redisTokenStore() {
-        return new RedisTokenStore(new LettuceConnectionFactory());
+        return new RedisTokenStore(redisConnectionFactory);
     }
 
-    @Bean("authorizationServerJdbcTokenStore")
-    @ConditionalOnProperty(prefix = "authorization-server", name = "token-type",havingValue = "jdbc")
-    protected TokenStore jdbcTokenStore() {
-        return new JdbcTokenStore(new HikariDataSource());
-    }
+//    @Bean("authorizationServerJdbcTokenStore")
+//    @ConditionalOnProperty(prefix = "authorization-server", name = "token-type",havingValue = "jdbc")
+//    protected TokenStore jdbcTokenStore() {
+//        return new JdbcTokenStore(dataSource);
+//    }
 
     /**
      * 授权码模式数据来源

@@ -29,11 +29,11 @@ import java.util.Collections;
 @Component
 public class CodeGenerateUtils {
 
-    private @Value("${spring.datasource.url}")
+    private @Value("${spring.datasource.url:}")
     String url;
-    private @Value("${spring.datasource.username}")
+    private @Value("${spring.datasource.username:}")
     String username;
-    private @Value("${spring.datasource.password}")
+    private @Value("${spring.datasource.password:}")
     String password;
 
     public void generate(String moduleName, String parent, String... tableName) {

@@ -19,18 +19,8 @@
 
     <dependencies>
         <dependency>
-            <groupId>org.springframework.security.oauth</groupId>
-            <artifactId>spring-security-oauth2</artifactId>
-            <version>${spring-security-oauth2.version}</version>
-        </dependency>
-        <dependency>
             <groupId>io.lucky</groupId>
             <artifactId>lucky-starter</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
-        </dependency>
-        <dependency>
-            <groupId>io.lucky</groupId>
-            <artifactId>lucky-security</artifactId>
             <version>0.0.1-SNAPSHOT</version>
         </dependency>
         <dependency>
@@ -38,10 +28,34 @@
             <artifactId>lucky-redis</artifactId>
             <version>0.0.1-SNAPSHOT</version>
         </dependency>
+<!--        <dependency>-->
+<!--            <groupId>io.lucky</groupId>-->
+<!--            <artifactId>lucky-database</artifactId>-->
+<!--            <version>0.0.1-SNAPSHOT</version>-->
+<!--        </dependency>-->
         <dependency>
             <groupId>io.lucky</groupId>
-            <artifactId>lucky-database</artifactId>
+            <artifactId>lucky-security</artifactId>
             <version>0.0.1-SNAPSHOT</version>
+        </dependency>
+
+
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-oauth2</artifactId>
+            <version>${spring-cloud-starter-oauth2.version}</version>
+            <exclusions>
+                <!--旧版本 redis操作有问题-->
+                <exclusion>
+                    <artifactId>spring-security-oauth2</artifactId>
+                    <groupId>org.springframework.security.oauth</groupId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.security.oauth</groupId>
+            <artifactId>spring-security-oauth2</artifactId>
+            <version>${spring-security-oauth2.version}</version>
         </dependency>
     </dependencies>
 
