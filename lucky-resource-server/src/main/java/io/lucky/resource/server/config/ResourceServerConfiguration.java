@@ -38,7 +38,7 @@ public class ResourceServerConfiguration extends ResourceServerConfigurerAdapter
         resources.resourceId(resourcePropertiesConfig.getResourceId()).tokenStore(new JwtTokenStore(jwtAccessTokenConverter()));
     }
 
-    @Bean
+    @Bean("resourceServerJwtAccessTokenConverter")
     protected JwtAccessTokenConverter jwtAccessTokenConverter() {
         JwtAccessTokenConverter converter = new JwtAccessTokenConverter();
         Resource resource = new ClassPathResource("public.cert");

@@ -9,3 +9,9 @@ openssl rsa -in rsa-private-key.pem -pubout -out rsa-public-key.pem
 openssl ecparam -genkey -name prime256v1 -out ecc-private-key.pem
 # 2. 通过密钥生成公钥
 openssl ec -in ecc-private-key.pem -pubout -out ecc-public-key.pem
+
+通过jdk的keytool生成jks和获取jks的信息,公匙
+
+keytool -genkeypair -alias 别名 -keyalg 加密方式 -keypass 密码 -keystore 文件名.jks -storepass 密码 -keystore jks文件保存路径
+
+keytool -list -rfc --keystore 文件名.jks | openssl x509 -inform pem -pubkey

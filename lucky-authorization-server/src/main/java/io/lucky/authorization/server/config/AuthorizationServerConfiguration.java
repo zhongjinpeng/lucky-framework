@@ -27,6 +27,7 @@ import org.springframework.security.oauth2.provider.token.*;
 import org.springframework.security.oauth2.provider.token.store.JwtAccessTokenConverter;
 import org.springframework.security.oauth2.provider.token.store.JwtTokenStore;
 import org.springframework.security.oauth2.provider.token.store.redis.RedisTokenStore;
+import org.springframework.security.rsa.crypto.KeyStoreKeyFactory;
 import org.springframework.util.FileCopyUtils;
 
 import java.io.IOException;
@@ -198,15 +199,9 @@ public class AuthorizationServerConfiguration extends AuthorizationServerConfigu
     @Bean("authorizationServerJwtAccessTokenConverter")
     @ConditionalOnProperty(prefix = "authorization-server", name = "token-type",havingValue = "jwt")
     protected JwtAccessTokenConverter jwtAccessTokenConverter() {
+        KeyStoreKeyFactory keyStoreKeyFactory = new KeyStoreKeyFactory(new ClassPathResource("jwt.jks"), "lucky@123456".toCharArray());
         JwtAccessTokenConverter converter = new JwtAccessTokenConverter();
-        Resource resource = new ClassPathResource("public.cert");
-        String publicKey = null;
-        try {
-            publicKey = new String(FileCopyUtils.copyToByteArray(resource.getInputStream()));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        converter.setVerifierKey(publicKey);
+        converter.setKeyPair(keyStoreKeyFactory.getKeyPair("jwt"));
         return converter;
     }
 
