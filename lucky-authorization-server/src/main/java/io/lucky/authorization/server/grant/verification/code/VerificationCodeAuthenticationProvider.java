@@ -9,6 +9,8 @@ import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 
+import java.util.Objects;
+
 public class VerificationCodeAuthenticationProvider implements AuthenticationProvider {
 
     private AuthorizationVerificationCodeService authorizationVerificationCodeService;
@@ -37,7 +39,10 @@ public class VerificationCodeAuthenticationProvider implements AuthenticationPro
             throw AuthorizationServerException.authorizationServerException(AuthorizationServerExceptionEnum.VERIFICATION_CODE_AUTHORIZATION_VERIFICATION_CODE_ERROR);
         }
         LuckyUser luckyUser = authorizationUserService.queryUserByPhone(String.valueOf(principal));
-        return new VerificationCodeAuthenticationToken(principal,luckyUser.getAuthorities());
+        if(Objects.isNull(luckyUser)){
+            throw AuthorizationServerException.authorizationServerException(AuthorizationServerExceptionEnum.VERIFICATION_CODE_AUTHORIZATION_USER_NOT_FOUND);
+        }
+        return new VerificationCodeAuthenticationToken(luckyUser,luckyUser.getAuthorities());
     }
 
     @Override
